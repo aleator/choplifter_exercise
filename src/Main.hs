@@ -10,7 +10,10 @@ main = play
         (InWindow "Choplifter" (400,400) (200,200))
         (light blue)
         24
-        (Peli 0 (10,0) (0,0) 0 0)
+        (Peli 0 
+              (10,0) (0,0) 0 0
+              [Talo 800 500 700]
+        )
         piirräPeli
         reagoi
         päivitäPeliä
@@ -31,6 +34,7 @@ päivitäPeliä aikaEdellisestä edellinenTila
      Peli aika (kopteriX,kopteriY) 
                (vX,vY) 
                teho kulma
+               talot
         -> let
             (dX,dY) = kulmaJaTehoKiihtyvyydeksi teho kulma
            in Peli (aika + aikaEdellisestä) 
@@ -39,6 +43,7 @@ päivitäPeliä aikaEdellisestä edellinenTila
                    ((vX + dX) * 0.97 , (vY + dY - 5) * 0.97 )
                    teho
                    kulma
+                   talot
 
 kulmaJaTehoKiihtyvyydeksi :: Float -> Float -> (Float,Float)
 kulmaJaTehoKiihtyvyydeksi teho kulma 
@@ -50,10 +55,12 @@ piirräPeli peli = let
                    aika  = cl_aika peli
                    (kopteriX,kopteriY) = cl_paikka peli
                    teho = cl_teho peli
+                   talot = cl_talot peli
 
                    kopterikuva = rotate kulma (scale 0.4 0.4 (kopteri teho aika))
                    peliKuva = translate kopteriX kopteriY kopterikuva
                                         <> maa  
+                                        <> pictures (map piirräTalo talot)
                   in scale 0.25 0.25 (translate 0 (-180) peliKuva)
 
 kallista :: Float -> Choplifter -> Choplifter
@@ -68,12 +75,28 @@ muutaTehoa muutos peli = peli{cl_teho = muutos + cl_teho peli}
 data Choplifter 
  = Peli 
    {
-     cl_aika   :: Float  -- ^ Aika pelin alusta
+     cl_aika   :: Float          -- ^ Aika pelin alusta
+
     ,cl_paikka :: (Float, Float) -- ^ Missä kopteri?
     ,cl_nopeus :: (Float, Float) -- ^ Kuinka nopeasti menee?
     ,cl_teho   :: Float          -- ^ Teho
     ,cl_kulma  :: Float          -- ^ Kuinka vinossa
+   
+    ,cl_talot  :: [Talo]         -- Esteet pelissä
+    
    }
+
+data Talo = Talo {talo_korkeus :: Float, talo_leveys :: Float
+                 ,talo_sijainti :: Float }
+
+--- Tästä alaspäin piirtofunktioita
+
+piirräTalo :: Talo -> Picture
+piirräTalo talo = let
+                   paikoillaan = translate (talo_sijainti talo) (talo_korkeus talo / 2) talonKuva
+                   talonKuva = color (greyN 0.5) 
+                                (rectangleSolid (talo_leveys talo) (talo_korkeus talo))
+                  in paikoillaan
 
 maa :: Picture
 maa = color green (translate 0 (-500) (rectangleSolid 5000 1000))
@@ -92,3 +115,5 @@ kopteri teho aika = translate 0 (150) (color white runko)
             <> translate 0 (-150)        (rectangleSolid 200 15)
 
   lapa = translate 0 150 (rectangleSolid (350 * sin (aika * teho)) 10)
+
+
