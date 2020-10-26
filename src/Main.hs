@@ -42,7 +42,21 @@ päivitäPelitilanne aikaEdellisestä pelitilanne
         GameOn cl   -> case  törmääköTaloon (cl_paikka cl) (cl_kulma cl) (cl_talot cl) of
                         Nothing -> GameOn (päivitäPeliä aikaEdellisestä cl)
                         Just Roottori -> GameOver cl
-                        Just Laskuteline -> GameOver cl
+                        Just Laskuteline 
+                            | onkoHyväLaskeutuminen (cl_nopeus cl) (cl_kulma cl)
+                                -> GameOn (päivitäPeliä aikaEdellisestä 
+                                            cl{cl_kulma=0
+                                              ,cl_nopeus=pysäytäPystyssä (cl_nopeus cl)})
+                            | otherwise -> GameOver cl
+
+pysäytäPystyssä :: Vector -> Vector
+pysäytäPystyssä (vx,vy) = (vx, max 0 vy)
+
+onkoHyväLaskeutuminen :: Vector -> Float -> Bool
+onkoHyväLaskeutuminen nopeus kulma
+    | magV nopeus < 5 && abs kulma <= 10 = True
+    | otherwise = False
+
 
 päivitäPeliä :: Float -> Choplifter -> Choplifter
 päivitäPeliä aikaEdellisestä edellinenTila 
