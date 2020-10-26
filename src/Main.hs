@@ -133,8 +133,10 @@ piirräPeli peli = let
 
                    kopterikuva = rotate kulma (scale 0.4 0.4 (kopteri teho aika))
                 
-                   debugViesti = scale 0.2 0.2
-                                 (text ((show (magV (cl_nopeus peli))) <> "  " <> show kulma))
+                   debugViesti = scale 0.5 0.5
+                                 (text ((show (magV (cl_nopeus peli))) 
+                                        <> "  " 
+                                        <> show (ceiling kulma::Int)))
                    
                    peliKuva = translate kopteriX kopteriY kopterikuva 
                                         <> maa  
