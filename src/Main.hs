@@ -9,7 +9,8 @@ import Prelude hiding (Down)
 alkutilanne :: PeliTilanne 
 alkutilanne =
     GameOn 
-      (Peli 0 
+      (Peli 
+       0 
        (10,0) 
        (0,0) 
        0 
@@ -128,8 +129,6 @@ törmääköTaloon paikka kulma talot = fmap maximum1 (nonEmpty (mapMaybe törm�
                 (False,False) -> Nothing
                 _ -> Just Roottori
           
-(#+) :: Point -> Vector -> Point
-(a,b) #+ (x,y) = (a+x,b+y)
 
 piirräPeliTilanne :: PeliTilanne -> Picture
 piirräPeliTilanne pelitilanne 
@@ -192,6 +191,18 @@ data Choplifter
 -- Hemmot 
 data Hemmo = Hemmo {hemmo_sijainti :: Point}
 
+päivitäHemmoa :: Point -> Hemmo -> Hemmo
+päivitäHemmoa kopteri hemmo 
+        | liikkuu = hemmo{hemmo_sijainti = hemmo_sijainti hemmo #+ (suunta,0)}
+        | otherwise = hemmo
+    where 
+        liikkuu = magV (kopteri #- hemmo_sijainti hemmo) > 600
+        suunta 
+            | fst kopteri < fst (hemmo_sijainti hemmo)  
+                = -25
+            | otherwise             
+                =  25
+
 piirräHemmo :: Float -> Hemmo -> Picture
 piirräHemmo aika hemmo = let 
                      (x,y) = hemmo_sijainti hemmo
@@ -250,4 +261,12 @@ kopteri teho aika = translate 0 (150) (color white runko)
 
   lapa = translate 0 150 (rectangleSolid (350 * sin (aika * teho)) 10)
 
+--
+
+(#+) :: Point -> Vector -> Point
+(a,b) #+ (x,y) = (a+x,b+y)
+
+
+(#-) :: Point -> Point -> Vector
+(a,b) #- (x,y) = (a-x,b-y)
 
