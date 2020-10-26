@@ -7,6 +7,9 @@ import Graphics.Gloss.Geometry.Line
 import Prelude hiding (Down)
 import Data.List (partition)
 
+import Aritmetiikka
+import Hemmot
+
 alkutilanne :: PeliTilanne 
 alkutilanne =
     GameOn 
@@ -113,7 +116,8 @@ päivitäPeliä aikaEdellisestä edellinenTila
                                                    + genericLength hemmotKopteriin)
                             })
                    talot
-                   (map (päivitäHemmoa edellinenTila) hemmotUlkona)
+                   (map (päivitäHemmoa (flip korkeusKohdassa edellinenTila) (kopteriX,kopteriY)) 
+                        hemmotUlkona)
 
 kulmaJaTehoKiihtyvyydeksi :: Float -> Float -> (Float,Float)
 kulmaJaTehoKiihtyvyydeksi teho kulma 
@@ -224,55 +228,6 @@ korkeusKohdassa kohta peli =
     | otherwise = 0
 
 
--- Hemmot 
-data Hemmo = Hemmo {hemmo_sijainti :: Point}
-
-haluaakoLiikkua :: Choplifter -> Hemmo -> Bool
-haluaakoLiikkua peli hemmo = haluaaLiikkua && not putoaako
-     where
-        kopterinPaikka = cl_paikka peli
-
-        putoaako = abs (korkeusEdessä - snd (hemmo_sijainti hemmo)) > 50
-        korkeusEdessä = korkeusKohdassa (fst (hemmo_sijainti hemmo) + suunta * 2)
-                                        peli  
-
-        haluaaLiikkua = magV (kopterinPaikka #- hemmo_sijainti hemmo) < 600
-        suunta = minneHemmoMenisi peli hemmo
-
-minneHemmoMenisi :: Choplifter -> Hemmo -> Float
-minneHemmoMenisi peli hemmo
-            | fst kopterinPaikka < fst (hemmo_sijainti hemmo)  
-                = -15
-            | otherwise             
-                =  15
-     where
-        kopterinPaikka = cl_paikka peli
-
-päivitäHemmoa :: Choplifter -> Hemmo -> Hemmo
-päivitäHemmoa peli hemmo 
-        | haluaakoLiikkua peli hemmo 
-            = hemmo{hemmo_sijainti = hemmo_sijainti hemmo #+ (suunta,0)}
-        | otherwise 
-            = hemmo
-    where   
-     suunta = minneHemmoMenisi peli hemmo
-
-piirräHemmo :: Float -> Hemmo -> Picture
-piirräHemmo aika hemmo = let 
-                     (x,y) = hemmo_sijainti hemmo
-                     lantio = (15,40)
-                     vasenJalka = 15+sin (12*aika) * 7
-                     oikeaJalka = 15+cos (12*aika) * 7
-                     hemmonKuva = color white 
-                        (translate 0 110 (circleSolid 20)
-                          <> line [(0,100), lantio] -- selkä
-                          <> line [(-40,90 + cos (8*aika+0.3) * 40),(-30,90), (30,90)
-                                  , (40,90 + cos (8*aika) * 40)] -- kädet
-                          <> line [(-25,vasenJalka), (-20,vasenJalka) 
-                                  , lantio
-                                  , (30,oikeaJalka), (35,oikeaJalka)] --jalat
-                        )
-                    in translate x y hemmonKuva
 
 --- Talot
 data Talo = Talo {talo_korkeus :: Float, talo_leveys :: Float
@@ -316,11 +271,4 @@ piirräKopteri teho aika = translate 0 (150) (color white runko)
   lapa = translate 0 150 (rectangleSolid (350 * sin (aika * teho)) 10)
 
 --
-
-(#+) :: Point -> Vector -> Point
-(a,b) #+ (x,y) = (a+x,b+y)
-
-
-(#-) :: Point -> Point -> Vector
-(a,b) #- (x,y) = (a-x,b-y)
 
