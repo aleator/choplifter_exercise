@@ -92,7 +92,7 @@ päivitäPeliä aikaEdellisestä edellinenTila
                    kulma
                    hemmojaKyydissä
                    talot
-                   (map (päivitäHemmoa (kopteriX,kopteriY)) hemmot)
+                   (map (päivitäHemmoa edellinenTila) hemmot)
 
 kulmaJaTehoKiihtyvyydeksi :: Float -> Float -> (Float,Float)
 kulmaJaTehoKiihtyvyydeksi teho kulma 
@@ -188,20 +188,36 @@ data Choplifter
     
    }
 
+korkeusKohdassa :: Float -> Choplifter -> Float
+korkeusKohdassa kohta peli =
+  maybe 0 maximum1 . nonEmpty . map osuukoTaloon . cl_talot $ peli
+ where
+  osuukoTaloon :: Talo -> Float
+  osuukoTaloon talo
+    | abs (talo_sijainti talo - kohta) < (talo_leveys talo / 2) = talo_korkeus
+      talo
+    | otherwise = 0
+
+
 -- Hemmot 
 data Hemmo = Hemmo {hemmo_sijainti :: Point}
 
-päivitäHemmoa :: Point -> Hemmo -> Hemmo
-päivitäHemmoa kopterinPaikka hemmo 
+päivitäHemmoa :: Choplifter -> Hemmo -> Hemmo
+päivitäHemmoa peli hemmo 
         | liikkuu = hemmo{hemmo_sijainti = hemmo_sijainti hemmo #+ (suunta,0)}
         | otherwise = hemmo
-    where 
-        liikkuu = magV (kopterinPaikka #- hemmo_sijainti hemmo) < 600
+    where   
+        kopterinPaikka = cl_paikka peli
+        liikkuu = haluaaLiikkua && not putoaako
+        putoaako = abs (korkeusEdessä - snd (hemmo_sijainti hemmo)) < 10
+        korkeusEdessä = korkeusKohdassa (fst (hemmo_sijainti hemmo) + suunta * 5)
+                                        peli  
+        haluaaLiikkua = magV (kopterinPaikka #- hemmo_sijainti hemmo) < 600
         suunta 
             | fst kopterinPaikka < fst (hemmo_sijainti hemmo)  
-                = -25
+                = -5
             | otherwise             
-                =  25
+                =  5
 
 piirräHemmo :: Float -> Hemmo -> Picture
 piirräHemmo aika hemmo = let 
