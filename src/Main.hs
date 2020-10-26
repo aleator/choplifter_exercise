@@ -209,15 +209,15 @@ päivitäHemmoa peli hemmo
     where   
         kopterinPaikka = cl_paikka peli
         liikkuu = haluaaLiikkua && not putoaako
-        putoaako = abs (korkeusEdessä - snd (hemmo_sijainti hemmo)) < 10
-        korkeusEdessä = korkeusKohdassa (fst (hemmo_sijainti hemmo) + suunta * 5)
+        putoaako = abs (korkeusEdessä - snd (hemmo_sijainti hemmo)) < 50
+        korkeusEdessä = korkeusKohdassa (fst (hemmo_sijainti hemmo) + suunta * 2)
                                         peli  
         haluaaLiikkua = magV (kopterinPaikka #- hemmo_sijainti hemmo) < 600
         suunta 
             | fst kopterinPaikka < fst (hemmo_sijainti hemmo)  
-                = -5
+                = -15
             | otherwise             
-                =  5
+                =  15
 
 piirräHemmo :: Float -> Hemmo -> Picture
 piirräHemmo aika hemmo = let 
