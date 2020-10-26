@@ -9,31 +9,20 @@ import Data.List (partition)
 
 import Aritmetiikka
 import Hemmot
+import Kopteri
 
 alkutilanne :: PeliTilanne 
 alkutilanne =
     GameOn 
       (Peli 
        0 
-       alkuKopteri
+       (luoKopteri (0,0))
        [Talo 800 500 700]
        [Hemmo (700, 800), Hemmo (900, 800)]
       )
 
-alkuKopteri :: Kopteri
-alkuKopteri = Kopteri
-       (10,0) 
-       (0,0) 
-       0 
-       0
-       0 -- hemmoa
-
 main :: IO ()
--- main = animate 
---          (InWindow "Choplifter" (400,400) (200,200))
---          (light blue)
---          (flip piirräHemmo (Hemmo (0,0)))
--- 
+
 main = play 
         (InWindow "Choplifter" (400,400) (200,200))
         (light blue)
@@ -123,18 +112,6 @@ kulmaJaTehoKiihtyvyydeksi :: Float -> Float -> (Float,Float)
 kulmaJaTehoKiihtyvyydeksi teho kulma 
     = rotateV (- degToRad kulma) (0,teho) 
 
-kopteriTörmäysviivat :: Point -> Float -> ((Point,Point) , (Point,Point))
-kopteriTörmäysviivat paikka kulma = 
-    let
-     vasen = -170
-     oikea = 100 
-     kääntö = rotateV (- degToRad kulma)
-    in (  (kääntö (vasen,0) #+ paikka
-          ,kääntö (oikea,0) #+ paikka)
-          ,
-          (kääntö (vasen,120) #+ paikka
-          ,kääntö (oikea,120) #+ paikka)
-       )
 
 data TörmäysKohta = Laskuteline | Roottori 
         deriving (Eq,Ord,Show)
@@ -207,14 +184,6 @@ data Choplifter
     
    }
 
-data Kopteri = Kopteri {
-     kop_paikka :: (Float, Float) -- ^ Missä kopteri?
-    ,kop_nopeus :: (Float, Float) -- ^ Kuinka nopeasti menee?
-    ,kop_teho   :: Float          -- ^ Teho
-    ,kop_kulma  :: Float          -- ^ Kuinka vinossa
-    ,kop_hemmojaKyydissä :: Natural -- Kuinka monta hemmoa kerätty 
-
-}
 
 
 korkeusKohdassa :: Float -> Choplifter -> Float
@@ -255,20 +224,6 @@ nurkkaPisteet talo =
 maa :: Picture
 maa = color green (translate 0 (-500) (rectangleSolid 5000 1000))
 
-piirräKopteri :: Float -> Float -> Picture
-piirräKopteri teho aika = translate 0 (150) (color white runko)
- where
-  runko = circleSolid 100 
-            <> translate (-200) 0 (rectangleSolid 300 30)
-            <> translate (-350) 0 (rectangleSolid 50 100)
-            <> lapa 
-            <> translate 0 90     (rectangleSolid 10 120)
-
-            <> translate (-50) (-90)     (rectangleSolid 10 120)
-            <> translate (50) (-90)      (rectangleSolid 10 120)
-            <> translate 0 (-150)        (rectangleSolid 200 15)
-
-  lapa = translate 0 150 (rectangleSolid (350 * sin (aika * teho)) 10)
 
 --
 
