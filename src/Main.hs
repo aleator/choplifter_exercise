@@ -6,19 +6,32 @@ import Graphics.Gloss.Data.Vector
 import Graphics.Gloss.Geometry.Line
 import Prelude hiding (Down)
 
+alkutilanne :: PeliTilanne 
+alkutilanne =
+    GameOn 
+      (Peli 0 
+       (10,0) 
+       (0,0) 
+       0 
+       0
+       0 -- hemmoa
+       [Talo 800 500 700]
+       [Hemmo (800, 700), Hemmo (800, 900)]
+      )
+
 main :: IO ()
-main = play 
-        (InWindow "Choplifter" (400,400) (200,200))
-        (light blue)
-        24
-        (GameOn 
-          (Peli 0 
-              (10,0) (0,0) 0 0
-              [Talo 800 500 700]
-          ))
-        piirräPeliTilanne
-        reagoiPeliTilanne
-        päivitäPelitilanne
+main = display 
+         (InWindow "Choplifter" (400,400) (200,200))
+         (light blue)
+         (piirräHemmo (Hemmo (0,0)))
+-- main = play 
+--         (InWindow "Choplifter" (400,400) (200,200))
+--         (light blue)
+--         24
+--         alkutilanne 
+--         piirräPeliTilanne
+--         reagoiPeliTilanne
+--         päivitäPelitilanne
 
 reagoiPeliTilanne :: Event -> PeliTilanne -> PeliTilanne
 reagoiPeliTilanne tapahtuma pelitilanne 
@@ -64,7 +77,9 @@ päivitäPeliä aikaEdellisestä edellinenTila
      Peli aika (kopteriX,kopteriY) 
                (vX,vY) 
                teho kulma
+               hemmojaKyydissä
                talot
+               hemmot
         -> let
             (dX,dY) = kulmaJaTehoKiihtyvyydeksi teho kulma
            in Peli (aika + aikaEdellisestä) 
@@ -73,7 +88,9 @@ päivitäPeliä aikaEdellisestä edellinenTila
                    ((vX + dX) * 0.97 , (vY + dY - 5) * 0.97 )
                    teho
                    kulma
+                   hemmojaKyydissä
                    talot
+                   hemmot
 
 kulmaJaTehoKiihtyvyydeksi :: Float -> Float -> (Float,Float)
 kulmaJaTehoKiihtyvyydeksi teho kulma 
@@ -166,15 +183,30 @@ data Choplifter
     ,cl_nopeus :: (Float, Float) -- ^ Kuinka nopeasti menee?
     ,cl_teho   :: Float          -- ^ Teho
     ,cl_kulma  :: Float          -- ^ Kuinka vinossa
+    ,cl_hemmojaKyydissä :: Natural -- Kuinka monta hemmoa kerätty 
    
     ,cl_talot  :: [Talo]         -- Esteet pelissä
+    ,cl_hemmot :: [Hemmo]        -- Pelihahmot
     
    }
 
+-- Hemmot 
+data Hemmo = Hemmo {hemmo_sijainti :: Point}
+
+piirräHemmo :: Hemmo -> Picture
+piirräHemmo hemmo = let 
+                     (x,y) = hemmo_sijainti hemmo
+                     hemmonKuva = color white 
+                        (translate 0 100 (circleSolid 20)
+                          <> line [(0,100), (30,40)] -- selkä
+                          <> line [(-30,90), (30,90)] -- kädet
+                          <> line [(35,0), (-30,0) , (30,40), (30,0), (35,0)] --jalat
+                        )
+                    in translate x y hemmonKuva
+
+--- Talot
 data Talo = Talo {talo_korkeus :: Float, talo_leveys :: Float
                  ,talo_sijainti :: Float }
-
---- Tästä alaspäin piirtofunktioita
 
 piirräTalo :: Talo -> Picture
 piirräTalo talo = let
