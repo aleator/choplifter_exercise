@@ -197,12 +197,16 @@ piirräHemmo :: Float -> Hemmo -> Picture
 piirräHemmo aika hemmo = let 
                      (x,y) = hemmo_sijainti hemmo
                      lantio = (15,40)
+                     vasenJalka = 15+sin (12*aika) * 7
+                     oikeaJalka = 15+cos (12*aika) * 7
                      hemmonKuva = color white 
                         (translate 0 110 (circleSolid 20)
                           <> line [(0,100), lantio] -- selkä
                           <> line [(-40,90 + cos (8*aika+0.3) * 40),(-30,90), (30,90)
                                   , (40,90 + cos (8*aika) * 40)] -- kädet
-                          <> line [(-25,15), (-20,15) , lantio, (30,0), (35,0)] --jalat
+                          <> line [(-25,vasenJalka), (-20,vasenJalka) 
+                                  , lantio
+                                  , (30,oikeaJalka), (35,oikeaJalka)] --jalat
                         )
                     in translate x y hemmonKuva
 
