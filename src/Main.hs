@@ -70,12 +70,12 @@ päivitäPelitilanne aikaEdellisestä pelitilanne
                         Just Laskuteline 
                             | onkoHyväLaskeutuminen (cl_nopeus cl) (cl_kulma cl)
                                 -> GameOn (päivitäPeliä aikaEdellisestä 
-                                            cl{cl_kopteri = (cl_kopteri cl)
-                                                                 {kop_kulma = 0
-                                                                 , kop_nopeus = 
-                                                                            pysäytäPystyssä 
-                                                                                (cl_nopeus cl)}})
+                                            (kopterille laskeudu cl))
                             | otherwise -> GameOver cl
+
+laskeudu :: Kopteri -> Kopteri
+laskeudu kopteri@(Kopteri {kop_nopeus=(_vX,vY)})
+    = kopteri {kop_kulma = 0, kop_nopeus = (0,max 0 vY)}
 
 pysäytäPystyssä :: Vector -> Vector
 pysäytäPystyssä (vx,vy) = (vx, max 0 vy)
@@ -91,22 +91,30 @@ päivitäPeliä aikaEdellisestä edellinenTila
   = case edellinenTila of
      Peli aika kopteri talot hemmot
         -> let
-            (dX,dY) = kulmaJaTehoKiihtyvyydeksi (kop_teho kopteri) (kop_kulma kopteri)
-            (kopteriX,kopteriY) = kop_paikka kopteri
-            (vX,vY) = kop_nopeus kopteri
-            nouseekoKyytiin hemmo = magV (hemmo_sijainti hemmo #- (kopteriX,kopteriY)) < 50
+            nouseekoKyytiin hemmo = magV (hemmo_sijainti hemmo #- kop_paikka kopteri) < 50
             (hemmotKopteriin,hemmotUlkona) = partition nouseekoKyytiin hemmot
            in Peli (aika + aikaEdellisestä) 
-                   (kopteri{
+                   (noukiHemmot hemmotKopteriin . päivitäKopteri aikaEdellisestä $ kopteri)
+                   talot
+                   (map (päivitäHemmoa (flip korkeusKohdassa edellinenTila) (kop_paikka kopteri)) 
+                        hemmotUlkona)
+
+noukiHemmot :: [Hemmo] -> Kopteri -> Kopteri
+noukiHemmot hemmot kopteri 
+    = kopteri{
+       kop_hemmojaKyydissä = (kop_hemmojaKyydissä kopteri + genericLength hemmot)
+      }
+
+päivitäKopteri :: Float -> Kopteri -> Kopteri
+päivitäKopteri aikaEdellisestä kopteri = kopteri{
                             kop_paikka = (kopteriX+ aikaEdellisestä *  vX
                                          , max 0 (kopteriY+aikaEdellisestä *  vY) )
                            ,kop_nopeus = ((vX + dX) * 0.97 , (vY + dY - 5) * 0.97 )
-                           ,kop_hemmojaKyydissä = (kop_hemmojaKyydissä kopteri 
-                                                   + genericLength hemmotKopteriin)
-                            })
-                   talot
-                   (map (päivitäHemmoa (flip korkeusKohdassa edellinenTila) (kopteriX,kopteriY)) 
-                        hemmotUlkona)
+                            }
+            where 
+                (dX,dY) = kulmaJaTehoKiihtyvyydeksi (kop_teho kopteri) (kop_kulma kopteri)
+                (kopteriX,kopteriY) = kop_paikka kopteri
+                (vX,vY) = kop_nopeus kopteri
 
 kulmaJaTehoKiihtyvyydeksi :: Float -> Float -> (Float,Float)
 kulmaJaTehoKiihtyvyydeksi teho kulma 
