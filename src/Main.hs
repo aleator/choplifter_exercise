@@ -200,7 +200,7 @@ piirräHemmo aika hemmo = let
                      hemmonKuva = color white 
                         (translate 0 110 (circleSolid 20)
                           <> line [(0,100), lantio] -- selkä
-                          <> line [(-40,90 + cos (8*aika) * 40),(-30,90), (30,90)
+                          <> line [(-40,90 + cos (8*aika+0.3) * 40),(-30,90), (30,90)
                                   , (40,90 + cos (8*aika) * 40)] -- kädet
                           <> line [(-25,15), (-20,15) , lantio, (30,0), (35,0)] --jalat
                         )
