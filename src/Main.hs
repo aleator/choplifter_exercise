@@ -20,18 +20,19 @@ alkutilanne =
       )
 
 main :: IO ()
-main = animate 
-         (InWindow "Choplifter" (400,400) (200,200))
-         (light blue)
-         (flip piirräHemmo (Hemmo (0,0)))
--- main = play 
---         (InWindow "Choplifter" (400,400) (200,200))
---         (light blue)
---         24
---         alkutilanne 
---         piirräPeliTilanne
---         reagoiPeliTilanne
---         päivitäPelitilanne
+-- main = animate 
+--          (InWindow "Choplifter" (400,400) (200,200))
+--          (light blue)
+--          (flip piirräHemmo (Hemmo (0,0)))
+-- 
+main = play 
+        (InWindow "Choplifter" (400,400) (200,200))
+        (light blue)
+        24
+        alkutilanne 
+        piirräPeliTilanne
+        reagoiPeliTilanne
+        päivitäPelitilanne
 
 reagoiPeliTilanne :: Event -> PeliTilanne -> PeliTilanne
 reagoiPeliTilanne tapahtuma pelitilanne 
@@ -149,18 +150,16 @@ piirräPeli peli = let
                    apuviivaYlä= color red (line [va1,oa1])
 
                    kopterikuva = rotate kulma (scale 0.4 0.4 (kopteri teho aika))
-                
-                   debugViesti = scale 0.5 0.5
-                                 (text ((show (magV (cl_nopeus peli))) 
-                                        <> "  " 
-                                        <> show (ceiling kulma::Int)))
-                   
+
+                   hemmoKuvat = map (piirräHemmo aika)  (cl_hemmot peli)
+                   taloKuvat  = map piirräTalo talot
                    peliKuva = translate kopteriX kopteriY kopterikuva 
                                         <> maa  
-                                        <> pictures (map piirräTalo talot)
+                                        <> pictures taloKuvat
+                                        <> pictures hemmoKuvat
                                         <> apuviivaAla
                                         <> apuviivaYlä
-                                        <> debugViesti
+                                        
                   in scale 0.25 0.25 (translate 0 (-180) peliKuva)
 
 kallista :: Float -> Choplifter -> Choplifter
