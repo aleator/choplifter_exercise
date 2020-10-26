@@ -197,10 +197,10 @@ piirräHemmo :: Hemmo -> Picture
 piirräHemmo hemmo = let 
                      (x,y) = hemmo_sijainti hemmo
                      hemmonKuva = color white 
-                        (translate 0 100 (circleSolid 20)
+                        (translate 0 110 (circleSolid 20)
                           <> line [(0,100), (30,40)] -- selkä
                           <> line [(-40,50),(-30,90), (30,90), (40,130)] -- kädet
-                          <> line [(-35,0), (-30,0) , (30,40), (30,0), (35,0)] --jalat
+                          <> line [(-25,15), (-20,15) , (30,40), (30,0), (35,0)] --jalat
                         )
                     in translate x y hemmonKuva
 
