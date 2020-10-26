@@ -92,7 +92,7 @@ päivitäPeliä aikaEdellisestä edellinenTila
                    kulma
                    hemmojaKyydissä
                    talot
-                   hemmot
+                   (map (päivitäHemmoa (kopteriX,kopteriY)) hemmot)
 
 kulmaJaTehoKiihtyvyydeksi :: Float -> Float -> (Float,Float)
 kulmaJaTehoKiihtyvyydeksi teho kulma 
@@ -192,13 +192,13 @@ data Choplifter
 data Hemmo = Hemmo {hemmo_sijainti :: Point}
 
 päivitäHemmoa :: Point -> Hemmo -> Hemmo
-päivitäHemmoa kopteri hemmo 
+päivitäHemmoa kopterinPaikka hemmo 
         | liikkuu = hemmo{hemmo_sijainti = hemmo_sijainti hemmo #+ (suunta,0)}
         | otherwise = hemmo
     where 
-        liikkuu = magV (kopteri #- hemmo_sijainti hemmo) < 600
+        liikkuu = magV (kopterinPaikka #- hemmo_sijainti hemmo) < 600
         suunta 
-            | fst kopteri < fst (hemmo_sijainti hemmo)  
+            | fst kopterinPaikka < fst (hemmo_sijainti hemmo)  
                 = -25
             | otherwise             
                 =  25
