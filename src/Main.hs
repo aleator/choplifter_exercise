@@ -196,7 +196,7 @@ päivitäHemmoa kopteri hemmo
         | liikkuu = hemmo{hemmo_sijainti = hemmo_sijainti hemmo #+ (suunta,0)}
         | otherwise = hemmo
     where 
-        liikkuu = magV (kopteri #- hemmo_sijainti hemmo) > 600
+        liikkuu = magV (kopteri #- hemmo_sijainti hemmo) < 600
         suunta 
             | fst kopteri < fst (hemmo_sijainti hemmo)  
                 = -25
