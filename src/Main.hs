@@ -20,10 +20,10 @@ alkutilanne =
       )
 
 main :: IO ()
-main = display 
+main = animate 
          (InWindow "Choplifter" (400,400) (200,200))
          (light blue)
-         (piirräHemmo (Hemmo (0,0)))
+         (flip piirräHemmo (Hemmo (0,0)))
 -- main = play 
 --         (InWindow "Choplifter" (400,400) (200,200))
 --         (light blue)
@@ -193,13 +193,14 @@ data Choplifter
 -- Hemmot 
 data Hemmo = Hemmo {hemmo_sijainti :: Point}
 
-piirräHemmo :: Hemmo -> Picture
-piirräHemmo hemmo = let 
+piirräHemmo :: Float -> Hemmo -> Picture
+piirräHemmo aika hemmo = let 
                      (x,y) = hemmo_sijainti hemmo
                      hemmonKuva = color white 
                         (translate 0 110 (circleSolid 20)
                           <> line [(0,100), (30,40)] -- selkä
-                          <> line [(-40,50),(-30,90), (30,90), (40,130)] -- kädet
+                          <> line [(-40,90 + sin aika * 40),(-30,90), (30,90)
+                                  , (40,90 + cos aika * 40)] -- kädet
                           <> line [(-25,15), (-20,15) , (30,40), (30,0), (35,0)] --jalat
                         )
                     in translate x y hemmonKuva
