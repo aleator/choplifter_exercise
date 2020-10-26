@@ -132,14 +132,16 @@ piirräPeli peli = let
                    apuviivaYlä= color red (line [va1,oa1])
 
                    kopterikuva = rotate kulma (scale 0.4 0.4 (kopteri teho aika))
-
-                   törmää = törmääköTaloon (kopteriX,kopteriY) kulma talot 
+                
+                   debugViesti = scale 0.2 0.2
+                                 (text ((show (magV (cl_nopeus peli))) <> "  " <> show kulma))
                    
                    peliKuva = translate kopteriX kopteriY kopterikuva 
                                         <> maa  
                                         <> pictures (map piirräTalo talot)
                                         <> apuviivaAla
                                         <> apuviivaYlä
+                                        <> debugViesti
                   in scale 0.25 0.25 (translate 0 (-180) peliKuva)
 
 kallista :: Float -> Choplifter -> Choplifter
