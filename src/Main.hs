@@ -5,6 +5,7 @@ import Graphics.Gloss.Geometry.Angle
 import Graphics.Gloss.Data.Vector
 import Graphics.Gloss.Geometry.Line
 import Prelude hiding (Down)
+import Data.List (partition)
 
 alkutilanne :: PeliTilanne 
 alkutilanne =
@@ -84,15 +85,17 @@ päivitäPeliä aikaEdellisestä edellinenTila
                hemmot
         -> let
             (dX,dY) = kulmaJaTehoKiihtyvyydeksi teho kulma
+            nouseekoKyytiin hemmo = magV (hemmo_sijainti hemmo #- (kopteriX,kopteriY)) < 50
+            (hemmotKopteriin,hemmotUlkona) = partition nouseekoKyytiin hemmot
            in Peli (aika + aikaEdellisestä) 
                    (kopteriX+ aikaEdellisestä *  vX
                    , max 0 (kopteriY+aikaEdellisestä *  vY) )
                    ((vX + dX) * 0.97 , (vY + dY - 5) * 0.97 )
                    teho
                    kulma
-                   hemmojaKyydissä
+                   (hemmojaKyydissä + genericLength hemmotKopteriin)
                    talot
-                   (map (päivitäHemmoa edellinenTila) hemmot)
+                   (map (päivitäHemmoa edellinenTila) hemmotUlkona)
 
 kulmaJaTehoKiihtyvyydeksi :: Float -> Float -> (Float,Float)
 kulmaJaTehoKiihtyvyydeksi teho kulma 
