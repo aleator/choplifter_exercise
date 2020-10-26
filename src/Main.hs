@@ -202,22 +202,35 @@ korkeusKohdassa kohta peli =
 -- Hemmot 
 data Hemmo = Hemmo {hemmo_sijainti :: Point}
 
-päivitäHemmoa :: Choplifter -> Hemmo -> Hemmo
-päivitäHemmoa peli hemmo 
-        | liikkuu = hemmo{hemmo_sijainti = hemmo_sijainti hemmo #+ (suunta,0)}
-        | otherwise = hemmo
-    where   
+haluaakoLiikkua :: Choplifter -> Hemmo -> Bool
+haluaakoLiikkua peli hemmo = haluaaLiikkua && not putoaako
+     where
         kopterinPaikka = cl_paikka peli
-        liikkuu = haluaaLiikkua && not putoaako
-        putoaako = abs (korkeusEdessä - snd (hemmo_sijainti hemmo)) < 50
+
+        putoaako = abs (korkeusEdessä - snd (hemmo_sijainti hemmo)) > 50
         korkeusEdessä = korkeusKohdassa (fst (hemmo_sijainti hemmo) + suunta * 2)
                                         peli  
+
         haluaaLiikkua = magV (kopterinPaikka #- hemmo_sijainti hemmo) < 600
-        suunta 
+        suunta = minneHemmoMenisi peli hemmo
+
+minneHemmoMenisi :: Choplifter -> Hemmo -> Float
+minneHemmoMenisi peli hemmo
             | fst kopterinPaikka < fst (hemmo_sijainti hemmo)  
                 = -15
             | otherwise             
                 =  15
+     where
+        kopterinPaikka = cl_paikka peli
+
+päivitäHemmoa :: Choplifter -> Hemmo -> Hemmo
+päivitäHemmoa peli hemmo 
+        | haluaakoLiikkua peli hemmo 
+            = hemmo{hemmo_sijainti = hemmo_sijainti hemmo #+ (suunta,0)}
+        | otherwise 
+            = hemmo
+    where   
+     suunta = minneHemmoMenisi peli hemmo
 
 piirräHemmo :: Float -> Hemmo -> Picture
 piirräHemmo aika hemmo = let 
