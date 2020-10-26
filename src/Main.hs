@@ -199,8 +199,8 @@ piirräHemmo aika hemmo = let
                      hemmonKuva = color white 
                         (translate 0 110 (circleSolid 20)
                           <> line [(0,100), (30,40)] -- selkä
-                          <> line [(-40,90 + sin aika * 40),(-30,90), (30,90)
-                                  , (40,90 + cos aika * 40)] -- kädet
+                          <> line [(-40,90 + cos (3*aika) * 40),(-30,90), (30,90)
+                                  , (40,90 + cos (3*aika) * 40)] -- kädet
                           <> line [(-25,15), (-20,15) , (30,40), (30,0), (35,0)] --jalat
                         )
                     in translate x y hemmonKuva
