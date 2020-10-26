@@ -16,7 +16,7 @@ alkutilanne =
        0
        0 -- hemmoa
        [Talo 800 500 700]
-       [Hemmo (700, 800), Hemmo (900, 700)]
+       [Hemmo (700, 800), Hemmo (900, 800)]
       )
 
 main :: IO ()
