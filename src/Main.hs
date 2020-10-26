@@ -54,7 +54,7 @@ pysäytäPystyssä (vx,vy) = (vx, max 0 vy)
 
 onkoHyväLaskeutuminen :: Vector -> Float -> Bool
 onkoHyväLaskeutuminen nopeus kulma
-    | magV nopeus < 5 && abs kulma <= 10 = True
+    | magV nopeus < 80 && abs kulma <= 10 = True
     | otherwise = False
 
 
