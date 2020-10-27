@@ -295,10 +295,3 @@ kopteri teho aika = translate 0 (150) (color white runko)
 
 --
 
-(#+) :: Point -> Vector -> Point
-(a,b) #+ (x,y) = (a+x,b+y)
-
-
-(#-) :: Point -> Point -> Vector
-(a,b) #- (x,y) = (a-x,b-y)
-
