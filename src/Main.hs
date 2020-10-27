@@ -6,21 +6,27 @@ import Graphics.Gloss.Data.Vector
 import Graphics.Gloss.Geometry.Line
 import Prelude hiding (Down)
 import Data.List (partition)
+
 import Aritmetiikka
 
 alkutilanne :: PeliTilanne 
-alkutilanne =
-    GameOn 
+alkutilanne 
+ = GameOn 
       (Peli 
        0 
-       (10,0) 
+       (luoKopteri (0,0))
+       [Talo 800 500 700]
+       [Hemmo (700, 800), Hemmo (900, 800)]
+      )
+
+luoKopteri :: Point -> Kopteri
+luoKopteri paikka 
+    = Kopteri 
+       paikka 
        (0,0) 
        0 
        0
        0 -- hemmoa
-       [Talo 800 500 700]
-       [Hemmo (700, 800), Hemmo (900, 800)]
-      )
 
 main :: IO ()
 -- main = animate 
@@ -46,31 +52,36 @@ reagoiPeliTilanne tapahtuma pelitilanne
 reagoi :: Event -> Choplifter -> Choplifter
 reagoi tapahtuma peli 
     = case tapahtuma of
-        EventKey (Char 'w') Down _ _ -> muutaTehoa 2.5 peli
-        EventKey (Char 's') Down _ _ -> muutaTehoa (-2.5) peli
-        EventKey (Char 'a') Down _ _ -> kallista (-8) peli
-        EventKey (Char 'd') Down _ _ -> kallista (8) peli
+        EventKey (Char 'w') Down _ _ -> kopterille (muutaTehoa 2.5) peli
+        EventKey (Char 's') Down _ _ -> kopterille (muutaTehoa (-2.5)) peli
+        EventKey (Char 'a') Down _ _ -> kopterille (kallista (-8)) peli
+        EventKey (Char 'd') Down _ _ -> kopterille (kallista (8)) peli
         _ -> peli
     
 päivitäPelitilanne :: Float -> PeliTilanne -> PeliTilanne
 päivitäPelitilanne aikaEdellisestä pelitilanne 
     = case pelitilanne of
-        GameOver cl -> GameOver cl
-        GameOn cl   -> case  törmääköTaloon (cl_paikka cl) (cl_kulma cl) (cl_talot cl) of
-                        Nothing -> GameOn (päivitäPeliä aikaEdellisestä cl)
-                        Just Roottori -> GameOver cl
+        GameOver peli -> GameOver peli
+        GameOn peli   -> case  törmääköTaloon (kopteriTörmäysviivat (cl_kopteri peli)) (cl_talot peli) of
+                        Nothing -> GameOn (päivitäPeliä aikaEdellisestä peli)
+                        Just Roottori -> GameOver peli
                         Just Laskuteline 
-                            | onkoHyväLaskeutuminen (cl_nopeus cl) (cl_kulma cl)
-                                -> GameOn (päivitäPeliä aikaEdellisestä 
-                                            cl{cl_kulma=0
-                                              ,cl_nopeus=pysäytäPystyssä (cl_nopeus cl)})
-                            | otherwise -> GameOver cl
+                            | onkoHyväLaskeutuminen (cl_kopteri peli) 
+                                -> GameOn (päivitäPeliä aikaEdellisestä (kopterille laskeudu peli))
+                            | otherwise -> GameOver peli
+
+kopterille :: (Kopteri -> Kopteri) -> Choplifter -> Choplifter
+kopterille f peli = peli{cl_kopteri = f (cl_kopteri peli)}
 
 pysäytäPystyssä :: Vector -> Vector
 pysäytäPystyssä (vx,vy) = (vx, max 0 vy)
 
-onkoHyväLaskeutuminen :: Vector -> Float -> Bool
-onkoHyväLaskeutuminen nopeus kulma
+laskeudu :: Kopteri -> Kopteri
+laskeudu kopteri = kopteri{ kop_kulma  = 0
+                          , kop_nopeus = pysäytäPystyssä (kop_nopeus kopteri)}
+
+onkoHyväLaskeutuminen :: Kopteri -> Bool
+onkoHyväLaskeutuminen Kopteri{kop_nopeus=nopeus , kop_kulma=kulma}
     | magV nopeus < 80 && abs kulma <= 10 = True
     | otherwise = False
 
@@ -78,23 +89,25 @@ onkoHyväLaskeutuminen nopeus kulma
 päivitäPeliä :: Float -> Choplifter -> Choplifter
 päivitäPeliä aikaEdellisestä edellinenTila 
   = case edellinenTila of
-     Peli aika (kopteriX,kopteriY) 
-               (vX,vY) 
-               teho kulma
-               hemmojaKyydissä
-               talot
-               hemmot
+     Peli aika kopteri talot hemmot
         -> let
-            (dX,dY) = kulmaJaTehoKiihtyvyydeksi teho kulma
-            nouseekoKyytiin hemmo = magV (hemmo_sijainti hemmo #- (kopteriX,kopteriY)) < 50
+            (dX,dY) = kulmaJaTehoKiihtyvyydeksi (kop_teho kopteri) (kop_kulma kopteri)
+            
+            (kopteriX,kopteriY) = kop_paikka kopteri
+            (vX,vY) = kop_nopeus kopteri
+
+            nouseekoKyytiin hemmo = magV (hemmo_sijainti hemmo #- (kop_paikka kopteri)) < 50
             (hemmotKopteriin,hemmotUlkona) = partition nouseekoKyytiin hemmot
            in Peli (aika + aikaEdellisestä) 
-                   (kopteriX+ aikaEdellisestä *  vX
-                   , max 0 (kopteriY+aikaEdellisestä *  vY) )
-                   ((vX + dX) * 0.97 , (vY + dY - 5) * 0.97 )
-                   teho
-                   kulma
-                   (hemmojaKyydissä + genericLength hemmotKopteriin)
+
+                   (kopteri{
+                       kop_paikka = (kopteriX + aikaEdellisestä * vX
+                                    , max 0 (kopteriY+aikaEdellisestä *  vY) )
+                       ,kop_nopeus = ((vX + dX) * 0.97 , (vY + dY - 5) * 0.97 )
+                       ,kop_hemmojaKyydissä = (kop_hemmojaKyydissä kopteri + genericLength hemmotKopteriin)
+                       }
+                   )
+
                    talot
                    (map (päivitäHemmoa edellinenTila) hemmotUlkona)
 
@@ -102,9 +115,11 @@ kulmaJaTehoKiihtyvyydeksi :: Float -> Float -> (Float,Float)
 kulmaJaTehoKiihtyvyydeksi teho kulma 
     = rotateV (- degToRad kulma) (0,teho) 
 
-kopteriTörmäysviivat :: Point -> Float -> ((Point,Point) , (Point,Point))
-kopteriTörmäysviivat paikka kulma = 
+kopteriTörmäysviivat :: Kopteri -> ((Point,Point) , (Point,Point))
+kopteriTörmäysviivat kopteri = 
     let
+     paikka = kop_paikka kopteri
+     kulma = kop_kulma kopteri
      vasen = -170
      oikea = 100 
      kääntö = rotateV (- degToRad kulma)
@@ -118,15 +133,15 @@ kopteriTörmäysviivat paikka kulma =
 data TörmäysKohta = Laskuteline | Roottori 
         deriving (Eq,Ord,Show)
 
-törmääköTaloon :: Point -> Float -> [Talo] -> Maybe TörmäysKohta
-törmääköTaloon paikka kulma talot = fmap maximum1 (nonEmpty (mapMaybe törmääköYhteen talot))
+törmääköTaloon :: ((Point,Point),(Point,Point)) -> [Talo] -> Maybe TörmäysKohta
+törmääköTaloon törmäysviivat talot = fmap maximum1 (nonEmpty (mapMaybe törmääköYhteen talot))
                                    -- case (nonEmpty (mapMaybe törmääköYhteen talot)) of
                                    --  Nothing -> Nothing
                                    --  Just kohdat -> Just (maximum1 kohdat)
     where
      törmääköYhteen talo 
         = let 
-            ((ala1,ala2),(ylä1,ylä2)) = kopteriTörmäysviivat paikka kulma
+            ((ala1,ala2),(ylä1,ylä2)) = törmäysviivat
             (va,oy)   = nurkkaPisteet talo 
           in case (not (segClearsBox ala1 ala2 va oy), not (segClearsBox ylä1 ylä2 va oy)) of
                 (True,False) -> Just Laskuteline
@@ -142,34 +157,25 @@ piirräPeliTilanne pelitilanne
 
 piirräPeli :: Choplifter -> Picture
 piirräPeli peli = let
-                   kulma = cl_kulma peli 
                    aika  = cl_aika peli
-                   (kopteriX,kopteriY) = cl_paikka peli
-                   teho = cl_teho peli
                    talot = cl_talot peli
 
-                   ((va,oa), (va1,oa1)) = kopteriTörmäysviivat (kopteriX, kopteriY) kulma
-                   apuviivaAla = color red (line [va,oa])
-                   apuviivaYlä= color red (line [va1,oa1])
-
-                   kopterikuva = rotate kulma (scale 0.4 0.4 (kopteri teho aika))
+                   kopterikuva =  piirräKopteri aika (cl_kopteri peli)
 
                    hemmoKuvat = map (piirräHemmo aika)  (cl_hemmot peli)
                    taloKuvat  = map piirräTalo talot
-                   peliKuva = translate kopteriX kopteriY kopterikuva 
+                   peliKuva = kopterikuva 
                                         <> maa  
                                         <> pictures taloKuvat
                                         <> pictures hemmoKuvat
-                                        <> apuviivaAla
-                                        <> apuviivaYlä
                                         
                   in scale 0.25 0.25 (translate 0 (-180) peliKuva)
 
-kallista :: Float -> Choplifter -> Choplifter
-kallista muutos peli = peli{cl_kulma = muutos + cl_kulma peli}
+kallista :: Float -> Kopteri -> Kopteri
+kallista muutos kopteri = kopteri{kop_kulma = muutos + kop_kulma kopteri}
 
-muutaTehoa :: Float -> Choplifter -> Choplifter
-muutaTehoa muutos peli = peli{cl_teho = muutos + cl_teho peli}
+muutaTehoa :: Float -> Kopteri -> Kopteri
+muutaTehoa muutos kopteri = kopteri{kop_teho = muutos + kop_teho kopteri}
                                           ---       ↑
                                           --     cl_teho :: Choplifter -> Float
                           
@@ -180,17 +186,19 @@ data Choplifter
  = Peli 
    {
      cl_aika   :: Float          -- ^ Aika pelin alusta
-
-    ,cl_paikka :: (Float, Float) -- ^ Missä kopteri?
-    ,cl_nopeus :: (Float, Float) -- ^ Kuinka nopeasti menee?
-    ,cl_teho   :: Float          -- ^ Teho
-    ,cl_kulma  :: Float          -- ^ Kuinka vinossa
-    ,cl_hemmojaKyydissä :: Natural -- Kuinka monta hemmoa kerätty 
-   
+    ,cl_kopteri :: Kopteri  
     ,cl_talot  :: [Talo]         -- Esteet pelissä
     ,cl_hemmot :: [Hemmo]        -- Pelihahmot
-    
    }
+
+data Kopteri = Kopteri {
+     kop_paikka :: (Float, Float) -- ^ Missä kopteri?
+    ,kop_nopeus :: (Float, Float) -- ^ Kuinka nopeasti menee?
+    ,kop_teho   :: Float          -- ^ Teho
+    ,kop_kulma  :: Float          -- ^ Kuinka vinossa
+    ,kop_hemmojaKyydissä :: Natural -- Kuinka monta hemmoa kerätty 
+    }
+
 
 korkeusKohdassa :: Float -> Choplifter -> Float
 korkeusKohdassa kohta peli =
@@ -209,23 +217,21 @@ data Hemmo = Hemmo {hemmo_sijainti :: Point}
 haluaakoLiikkua :: Choplifter -> Hemmo -> Bool
 haluaakoLiikkua peli hemmo = haluaaLiikkua && not putoaako
      where
-        kopterinPaikka = cl_paikka peli
+        kopterinPaikka = kop_paikka (cl_kopteri peli)
 
         putoaako = abs (korkeusEdessä - snd (hemmo_sijainti hemmo)) > 50
         korkeusEdessä = korkeusKohdassa (fst (hemmo_sijainti hemmo) + suunta * 2)
                                         peli  
 
         haluaaLiikkua = magV (kopterinPaikka #- hemmo_sijainti hemmo) < 600
-        suunta = minneHemmoMenisi peli hemmo
+        suunta = minneHemmoMenisi kopterinPaikka hemmo
 
-minneHemmoMenisi :: Choplifter -> Hemmo -> Float
-minneHemmoMenisi peli hemmo
+minneHemmoMenisi :: Point -> Hemmo -> Float
+minneHemmoMenisi kopterinPaikka hemmo
             | fst kopterinPaikka < fst (hemmo_sijainti hemmo)  
                 = -15
             | otherwise             
                 =  15
-     where
-        kopterinPaikka = cl_paikka peli
 
 päivitäHemmoa :: Choplifter -> Hemmo -> Hemmo
 päivitäHemmoa peli hemmo 
@@ -234,7 +240,8 @@ päivitäHemmoa peli hemmo
         | otherwise 
             = hemmo
     where   
-     suunta = minneHemmoMenisi peli hemmo
+     kopterinPaikka = kop_paikka (cl_kopteri peli)
+     suunta = minneHemmoMenisi kopterinPaikka hemmo
 
 piirräHemmo :: Float -> Hemmo -> Picture
 piirräHemmo aika hemmo = let 
@@ -279,8 +286,14 @@ nurkkaPisteet talo =
 maa :: Picture
 maa = color green (translate 0 (-500) (rectangleSolid 5000 1000))
 
-kopteri :: Float -> Float -> Picture
-kopteri teho aika = translate 0 (150) (color white runko)
+piirräKopteri :: Float -> Kopteri -> Picture
+piirräKopteri aika Kopteri{kop_teho = teho, kop_kulma = kulma, kop_paikka = (kopteriX,kopteriY)} 
+    = translate kopteriX kopteriY 
+      . rotate kulma 
+      . scale 0.4 0.4 
+      . translate 0 (150) 
+      . color white
+      $ runko
  where
   runko = circleSolid 100 
             <> translate (-200) 0 (rectangleSolid 300 30)
