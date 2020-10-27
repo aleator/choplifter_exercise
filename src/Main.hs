@@ -71,27 +71,15 @@ päivitäPeliä aikaEdellisestä edellinenTila
   = case edellinenTila of
      Peli aika kopteri talot hemmot
         -> let
-            (dX,dY) = kulmaJaTehoKiihtyvyydeksi (kop_teho kopteri) (kop_kulma kopteri)
-            
-            paikka@(kopteriX,kopteriY) = kop_paikka kopteri
-            (vX,vY) = kop_nopeus kopteri
-
+            paikka = kop_paikka kopteri
             nouseekoKyytiin hemmo = magV (hemmo_sijainti hemmo #- (kop_paikka kopteri)) < 50
             (hemmotKopteriin,hemmotUlkona) = partition nouseekoKyytiin hemmot
            in Peli (aika + aikaEdellisestä) 
-
-                   (kopteri{
-                       kop_paikka = (kopteriX + aikaEdellisestä * vX
-                                    , max 0 (kopteriY+aikaEdellisestä *  vY) )
-                       ,kop_nopeus = ((vX + dX) * 0.97 , (vY + dY - 5) * 0.97 )
-                       ,kop_hemmojaKyydissä = (kop_hemmojaKyydissä kopteri + genericLength hemmotKopteriin)
-                       }
-                   )
-
+                   (päivitäKopteria aikaEdellisestä (genericLength hemmotKopteriin) kopteri) 
                    talot
                    (map (päivitäHemmoa (flip korkeusKohdassa edellinenTila) 
-                                       paikka)
-                        hemmotUlkona)
+                                       paikka) hemmotUlkona)
+
 
 törmääköTaloon :: ((Point,Point),(Point,Point)) -> [Talo] -> Maybe TörmäysKohta
 törmääköTaloon törmäysviivat talot = fmap maximum1 (nonEmpty (mapMaybe törmääköYhteen talot))

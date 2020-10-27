@@ -25,6 +25,19 @@ luoKopteri paikka
        0
        0 -- hemmoa
 
+päivitäKopteria :: Float -> Natural -> Kopteri -> Kopteri
+päivitäKopteria aikaEdellisestä lisääHemmoja kopteri 
+ = kopteri{
+          kop_paikka = (kopteriX + aikaEdellisestä * vX
+                       , max 0 (kopteriY+aikaEdellisestä *  vY) )
+          ,kop_nopeus = ((vX + dX) * 0.97 , (vY + dY - 5) * 0.97 )
+          ,kop_hemmojaKyydissä = (kop_hemmojaKyydissä kopteri + lisääHemmoja)
+          }
+ where
+    (kopteriX,kopteriY) = kop_paikka kopteri
+    (vX,vY) = kop_nopeus kopteri
+    (dX,dY) = kulmaJaTehoKiihtyvyydeksi (kop_teho kopteri) (kop_kulma kopteri)
+
 
 laskeudu :: Kopteri -> Kopteri
 laskeudu kopteri = kopteri{ kop_kulma  = 0
