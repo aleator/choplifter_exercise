@@ -9,6 +9,7 @@ import Data.List (partition)
 
 import Aritmetiikka
 import Talot
+import Hemmot
 
 alkutilanne :: PeliTilanne 
 alkutilanne 
@@ -94,7 +95,7 @@ päivitäPeliä aikaEdellisestä edellinenTila
         -> let
             (dX,dY) = kulmaJaTehoKiihtyvyydeksi (kop_teho kopteri) (kop_kulma kopteri)
             
-            (kopteriX,kopteriY) = kop_paikka kopteri
+            paikka@(kopteriX,kopteriY) = kop_paikka kopteri
             (vX,vY) = kop_nopeus kopteri
 
             nouseekoKyytiin hemmo = magV (hemmo_sijainti hemmo #- (kop_paikka kopteri)) < 50
@@ -110,7 +111,9 @@ päivitäPeliä aikaEdellisestä edellinenTila
                    )
 
                    talot
-                   (map (päivitäHemmoa edellinenTila) hemmotUlkona)
+                   (map (päivitäHemmoa (flip korkeusKohdassa edellinenTila) 
+                                       paikka)
+                        hemmotUlkona)
 
 kulmaJaTehoKiihtyvyydeksi :: Float -> Float -> (Float,Float)
 kulmaJaTehoKiihtyvyydeksi teho kulma 
@@ -205,55 +208,7 @@ korkeusKohdassa :: Float -> Choplifter -> Float
 korkeusKohdassa kohta peli =
   maybe 0 maximum1 . nonEmpty . map (osuukoTaloon kohta) . cl_talot $ peli
 
-
 -- Hemmot 
-data Hemmo = Hemmo {hemmo_sijainti :: Point}
-
-haluaakoLiikkua :: Choplifter -> Hemmo -> Bool
-haluaakoLiikkua peli hemmo = haluaaLiikkua && not putoaako
-     where
-        kopterinPaikka = kop_paikka (cl_kopteri peli)
-
-        putoaako = abs (korkeusEdessä - snd (hemmo_sijainti hemmo)) > 50
-        korkeusEdessä = korkeusKohdassa (fst (hemmo_sijainti hemmo) + suunta * 2)
-                                        peli  
-
-        haluaaLiikkua = magV (kopterinPaikka #- hemmo_sijainti hemmo) < 600
-        suunta = minneHemmoMenisi kopterinPaikka hemmo
-
-minneHemmoMenisi :: Point -> Hemmo -> Float
-minneHemmoMenisi kopterinPaikka hemmo
-            | fst kopterinPaikka < fst (hemmo_sijainti hemmo)  
-                = -15
-            | otherwise             
-                =  15
-
-päivitäHemmoa :: Choplifter -> Hemmo -> Hemmo
-päivitäHemmoa peli hemmo 
-        | haluaakoLiikkua peli hemmo 
-            = hemmo{hemmo_sijainti = hemmo_sijainti hemmo #+ (suunta,0)}
-        | otherwise 
-            = hemmo
-    where   
-     kopterinPaikka = kop_paikka (cl_kopteri peli)
-     suunta = minneHemmoMenisi kopterinPaikka hemmo
-
-piirräHemmo :: Float -> Hemmo -> Picture
-piirräHemmo aika hemmo = let 
-                     (x,y) = hemmo_sijainti hemmo
-                     lantio = (15,40)
-                     vasenJalka = 15+sin (12*aika) * 7
-                     oikeaJalka = 15+cos (12*aika) * 7
-                     hemmonKuva = color white 
-                        (translate 0 110 (circleSolid 20)
-                          <> line [(0,100), lantio] -- selkä
-                          <> line [(-40,90 + cos (8*aika+0.3) * 40),(-30,90), (30,90)
-                                  , (40,90 + cos (8*aika) * 40)] -- kädet
-                          <> line [(-25,vasenJalka), (-20,vasenJalka) 
-                                  , lantio
-                                  , (30,oikeaJalka), (35,oikeaJalka)] --jalat
-                        )
-                    in translate x y hemmonKuva
 
 
 -- type Point = (Float,Float)
@@ -281,6 +236,4 @@ piirräKopteri aika Kopteri{kop_teho = teho, kop_kulma = kulma, kop_paikka = (ko
             <> translate 0 (-150)        (rectangleSolid 200 15)
 
   lapa = translate 0 150 (rectangleSolid (350 * sin (aika * teho)) 10)
-
---
 
