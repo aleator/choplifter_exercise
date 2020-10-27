@@ -68,22 +68,10 @@ päivitäPelitilanne aikaEdellisestä pelitilanne
                         Nothing -> GameOn (päivitäPeliä aikaEdellisestä cl)
                         Just Roottori -> GameOver cl
                         Just Laskuteline 
-                            | onkoHyväLaskeutuminen (cl_nopeus cl) (cl_kulma cl)
+                            | onkoHyväLaskeutuminen (cl_kopteri cl)
                                 -> GameOn (päivitäPeliä aikaEdellisestä 
                                             (kopterille laskeudu cl))
                             | otherwise -> GameOver cl
-
-laskeudu :: Kopteri -> Kopteri
-laskeudu kopteri@(Kopteri {kop_nopeus=(_vX,vY)})
-    = kopteri {kop_kulma = 0, kop_nopeus = (0,max 0 vY)}
-
-pysäytäPystyssä :: Vector -> Vector
-pysäytäPystyssä (vx,vy) = (vx, max 0 vy)
-
-onkoHyväLaskeutuminen :: Vector -> Float -> Bool
-onkoHyväLaskeutuminen nopeus kulma
-    | magV nopeus < 80 && abs kulma <= 10 = True
-    | otherwise = False
 
 
 päivitäPeliä :: Float -> Choplifter -> Choplifter
@@ -98,28 +86,6 @@ päivitäPeliä aikaEdellisestä edellinenTila
                    talot
                    (map (päivitäHemmoa (flip korkeusKohdassa edellinenTila) (kop_paikka kopteri)) 
                         hemmotUlkona)
-
-noukiHemmot :: [Hemmo] -> Kopteri -> Kopteri
-noukiHemmot hemmot kopteri 
-    = kopteri{
-       kop_hemmojaKyydissä = (kop_hemmojaKyydissä kopteri + genericLength hemmot)
-      }
-
-päivitäKopteri :: Float -> Kopteri -> Kopteri
-päivitäKopteri aikaEdellisestä kopteri = kopteri{
-                            kop_paikka = (kopteriX+ aikaEdellisestä *  vX
-                                         , max 0 (kopteriY+aikaEdellisestä *  vY) )
-                           ,kop_nopeus = ((vX + dX) * 0.97 , (vY + dY - 5) * 0.97 )
-                            }
-            where 
-                (dX,dY) = kulmaJaTehoKiihtyvyydeksi (kop_teho kopteri) (kop_kulma kopteri)
-                (kopteriX,kopteriY) = kop_paikka kopteri
-                (vX,vY) = kop_nopeus kopteri
-
-kulmaJaTehoKiihtyvyydeksi :: Float -> Float -> (Float,Float)
-kulmaJaTehoKiihtyvyydeksi teho kulma 
-    = rotateV (- degToRad kulma) (0,teho) 
-
 
 data TörmäysKohta = Laskuteline | Roottori 
         deriving (Eq,Ord,Show)
@@ -138,7 +104,6 @@ törmääköTaloon paikka kulma talot = fmap maximum1 (nonEmpty (mapMaybe törm�
                 (True,False) -> Just Laskuteline
                 (False,False) -> Nothing
                 _ -> Just Roottori
-          
 
 piirräPeliTilanne :: PeliTilanne -> Picture
 piirräPeliTilanne pelitilanne 
@@ -171,12 +136,6 @@ piirräPeli peli = let
                                         
                   in scale 0.25 0.25 (translate 0 (-180) peliKuva)
 
-kallista :: Float -> Kopteri -> Kopteri
-kallista muutos kopteri = kopteri{kop_kulma = muutos + kop_kulma kopteri}
-
-muutaTehoa :: Float -> Kopteri -> Kopteri
-muutaTehoa muutos kopteri = kopteri{kop_teho = muutos + kop_teho kopteri}
-                          
 
 data PeliTilanne = GameOver Choplifter | GameOn Choplifter
 

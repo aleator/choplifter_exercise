@@ -80,10 +80,9 @@ laskeudu :: Kopteri -> Kopteri
 laskeudu kopteri@(Kopteri {kop_nopeus=(_vX,vY)})
     = kopteri {kop_kulma = 0, kop_nopeus = (0,max 0 vY)}
 
-onkoHyväLaskeutuminen :: Vector -> Float -> Bool
-onkoHyväLaskeutuminen nopeus kulma
-    | magV nopeus < 80 && abs kulma <= 10 = True
-    | otherwise = False
+onkoHyväLaskeutuminen :: Kopteri -> Bool
+onkoHyväLaskeutuminen kopteri
+    =  magV (kop_nopeus kopteri) < 80 && abs (kop_kulma kopteri) <= 10 
 
 kallista :: Float -> Kopteri -> Kopteri
 kallista muutos kopteri = kopteri{kop_kulma = muutos + kop_kulma kopteri}
