@@ -8,3 +8,5 @@ import Graphics.Gloss.Data.Vector
 (#-) :: Point -> Point -> Vector
 (a,b) #- (x,y) = (a-x,b-y)
 
+pysäytäPystyssä :: Vector -> Vector
+pysäytäPystyssä (vx,vy) = (vx, max 0 vy)

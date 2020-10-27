@@ -1,7 +1,6 @@
 module Main where
 import Graphics.Gloss
 import Graphics.Gloss.Interface.Pure.Game
-import Graphics.Gloss.Geometry.Angle
 import Graphics.Gloss.Data.Vector
 import Graphics.Gloss.Geometry.Line
 import Prelude hiding (Down)
@@ -10,6 +9,7 @@ import Data.List (partition)
 import Aritmetiikka
 import Talot
 import Hemmot
+import Kopteri
 
 alkutilanne :: PeliTilanne 
 alkutilanne 
@@ -20,15 +20,6 @@ alkutilanne
        [Talo 800 500 700]
        [Hemmo (700, 800), Hemmo (900, 800)]
       )
-
-luoKopteri :: Point -> Kopteri
-luoKopteri paikka 
-    = Kopteri 
-       paikka 
-       (0,0) 
-       0 
-       0
-       0 -- hemmoa
 
 main :: IO ()
 -- main = animate 
@@ -75,19 +66,6 @@ päivitäPelitilanne aikaEdellisestä pelitilanne
 kopterille :: (Kopteri -> Kopteri) -> Choplifter -> Choplifter
 kopterille f peli = peli{cl_kopteri = f (cl_kopteri peli)}
 
-pysäytäPystyssä :: Vector -> Vector
-pysäytäPystyssä (vx,vy) = (vx, max 0 vy)
-
-laskeudu :: Kopteri -> Kopteri
-laskeudu kopteri = kopteri{ kop_kulma  = 0
-                          , kop_nopeus = pysäytäPystyssä (kop_nopeus kopteri)}
-
-onkoHyväLaskeutuminen :: Kopteri -> Bool
-onkoHyväLaskeutuminen Kopteri{kop_nopeus=nopeus , kop_kulma=kulma}
-    | magV nopeus < 80 && abs kulma <= 10 = True
-    | otherwise = False
-
-
 päivitäPeliä :: Float -> Choplifter -> Choplifter
 päivitäPeliä aikaEdellisestä edellinenTila 
   = case edellinenTila of
@@ -114,28 +92,6 @@ päivitäPeliä aikaEdellisestä edellinenTila
                    (map (päivitäHemmoa (flip korkeusKohdassa edellinenTila) 
                                        paikka)
                         hemmotUlkona)
-
-kulmaJaTehoKiihtyvyydeksi :: Float -> Float -> (Float,Float)
-kulmaJaTehoKiihtyvyydeksi teho kulma 
-    = rotateV (- degToRad kulma) (0,teho) 
-
-kopteriTörmäysviivat :: Kopteri -> ((Point,Point) , (Point,Point))
-kopteriTörmäysviivat kopteri = 
-    let
-     paikka = kop_paikka kopteri
-     kulma = kop_kulma kopteri
-     vasen = -170
-     oikea = 100 
-     kääntö = rotateV (- degToRad kulma)
-    in (  (kääntö (vasen,0) #+ paikka
-          ,kääntö (oikea,0) #+ paikka)
-          ,
-          (kääntö (vasen,120) #+ paikka
-          ,kääntö (oikea,120) #+ paikka)
-       )
-
-data TörmäysKohta = Laskuteline | Roottori 
-        deriving (Eq,Ord,Show)
 
 törmääköTaloon :: ((Point,Point),(Point,Point)) -> [Talo] -> Maybe TörmäysKohta
 törmääköTaloon törmäysviivat talot = fmap maximum1 (nonEmpty (mapMaybe törmääköYhteen talot))
@@ -175,14 +131,8 @@ piirräPeli peli = let
                                         
                   in scale 0.25 0.25 (translate 0 (-180) peliKuva)
 
-kallista :: Float -> Kopteri -> Kopteri
-kallista muutos kopteri = kopteri{kop_kulma = muutos + kop_kulma kopteri}
-
-muutaTehoa :: Float -> Kopteri -> Kopteri
-muutaTehoa muutos kopteri = kopteri{kop_teho = muutos + kop_teho kopteri}
                                           ---       ↑
                                           --     cl_teho :: Choplifter -> Float
-                          
 
 data PeliTilanne = GameOver Choplifter | GameOn Choplifter
 
@@ -195,13 +145,6 @@ data Choplifter
     ,cl_hemmot :: [Hemmo]        -- Pelihahmot
    }
 
-data Kopteri = Kopteri {
-     kop_paikka :: (Float, Float) -- ^ Missä kopteri?
-    ,kop_nopeus :: (Float, Float) -- ^ Kuinka nopeasti menee?
-    ,kop_teho   :: Float          -- ^ Teho
-    ,kop_kulma  :: Float          -- ^ Kuinka vinossa
-    ,kop_hemmojaKyydissä :: Natural -- Kuinka monta hemmoa kerätty 
-    }
 
 
 korkeusKohdassa :: Float -> Choplifter -> Float
@@ -216,24 +159,4 @@ korkeusKohdassa kohta peli =
 maa :: Picture
 maa = color green (translate 0 (-500) (rectangleSolid 5000 1000))
 
-piirräKopteri :: Float -> Kopteri -> Picture
-piirräKopteri aika Kopteri{kop_teho = teho, kop_kulma = kulma, kop_paikka = (kopteriX,kopteriY)} 
-    = translate kopteriX kopteriY 
-      . rotate kulma 
-      . scale 0.4 0.4 
-      . translate 0 (150) 
-      . color white
-      $ runko
- where
-  runko = circleSolid 100 
-            <> translate (-200) 0 (rectangleSolid 300 30)
-            <> translate (-350) 0 (rectangleSolid 50 100)
-            <> lapa 
-            <> translate 0 90     (rectangleSolid 10 120)
-
-            <> translate (-50) (-90)     (rectangleSolid 10 120)
-            <> translate (50) (-90)      (rectangleSolid 10 120)
-            <> translate 0 (-150)        (rectangleSolid 200 15)
-
-  lapa = translate 0 150 (rectangleSolid (350 * sin (aika * teho)) 10)
 
