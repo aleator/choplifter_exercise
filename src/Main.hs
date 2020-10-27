@@ -2,16 +2,20 @@ module Main where
 import Graphics.Gloss
 import Graphics.Gloss.Interface.Pure.Game
 import Graphics.Gloss.Data.Vector
+import Graphics.Gloss.Interface.Environment
 import Graphics.Gloss.Geometry.Line
 import Prelude hiding (Down)
 import Data.List (partition)
+import System.Random
 
 import Aritmetiikka
 import Talot
 import Hemmot
 import Kopteri
 
-alkutilanne :: PeliTilanne 
+alkutilanne :: Float 
+                -- ^ satunnaisluku
+                -> PeliTilanne 
 alkutilanne 
  = GameOn 
       (Peli 
@@ -27,11 +31,15 @@ main :: IO ()
 --          (light blue)
 --          (flip piirräHemmo (Hemmo (0,0)))
 -- 
-main = play 
+main 
+ = do
+      --koko <- getScreenSize 
+      satunnaisluku <- randomRIO (0,10)
+      play 
         (InWindow "Choplifter" (400,400) (200,200))
         (light blue)
         24
-        alkutilanne 
+        (alkutilanne satunnaisluku)
         piirräPeliTilanne
         reagoiPeliTilanne
         päivitäPelitilanne
@@ -72,7 +80,7 @@ päivitäPeliä aikaEdellisestä edellinenTila
      Peli aika kopteri talot hemmot
         -> let
             paikka = kop_paikka kopteri
-            nouseekoKyytiin hemmo = magV (hemmo_sijainti hemmo #- (kop_paikka kopteri)) < 50
+            nouseekoKyytiin hemmo = magV (hemmo_sijainti hemmo #- paikka) < 50
             (hemmotKopteriin,hemmotUlkona) = partition nouseekoKyytiin hemmot
            in Peli (aika + aikaEdellisestä) 
                    (päivitäKopteria aikaEdellisestä (genericLength hemmotKopteriin) kopteri) 
@@ -83,6 +91,8 @@ päivitäPeliä aikaEdellisestä edellinenTila
 
 törmääköTaloon :: ((Point,Point),(Point,Point)) -> [Talo] -> Maybe TörmäysKohta
 törmääköTaloon törmäysviivat talot = fmap maximum1 (nonEmpty (mapMaybe törmääköYhteen talot))
+                                        -- ↑           ↑
+                                        --            [a] -> Maybe (NonEmpty a)
                                    -- case (nonEmpty (mapMaybe törmääköYhteen talot)) of
                                    --  Nothing -> Nothing
                                    --  Just kohdat -> Just (maximum1 kohdat)
@@ -113,9 +123,9 @@ piirräPeli peli = let
                    hemmoKuvat = map (piirräHemmo aika)  (cl_hemmot peli)
                    taloKuvat  = map piirräTalo talot
                    peliKuva = kopterikuva 
-                                        <> maa  
-                                        <> pictures taloKuvat
-                                        <> pictures hemmoKuvat
+                               <> maa  
+                               <> pictures taloKuvat
+                               <> pictures hemmoKuvat
                                         
                   in scale 0.25 0.25 (translate 0 (-180) peliKuva)
 
