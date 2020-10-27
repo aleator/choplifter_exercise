@@ -6,6 +6,7 @@ import Graphics.Gloss.Data.Vector
 import Graphics.Gloss.Geometry.Line
 import Prelude hiding (Down)
 import Data.List (partition)
+import Aritmetiikka
 
 alkutilanne :: PeliTilanne 
 alkutilanne =
