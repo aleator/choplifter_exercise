@@ -47,9 +47,12 @@ kulmaJaTehoKiihtyvyydeksi :: Float -> Float -> (Float,Float)
 kulmaJaTehoKiihtyvyydeksi teho kulma 
     = rotateV (- degToRad kulma) (0,teho) 
 
-piirräKopteri :: Float -> Float -> Picture
-piirräKopteri teho aika = translate 0 (150) (color white runko)
+piirräKopteri :: Float -> Kopteri -> Picture
+piirräKopteri aika kopteri = translate x y (rotate (kop_kulma kopteri) (scale 0.4 0.4 kopterinKuva))
  where
+  (x,y) = kop_paikka kopteri
+  teho = kop_teho kopteri 
+  kopterinKuva = translate 0 (150) (color white runko)
   runko = circleSolid 100 
             <> translate (-200) 0 (rectangleSolid 300 30)
             <> translate (-350) 0 (rectangleSolid 50 100)
@@ -62,9 +65,11 @@ piirräKopteri teho aika = translate 0 (150) (color white runko)
 
   lapa = translate 0 150 (rectangleSolid (350 * sin (aika * teho)) 10)
 
-kopteriTörmäysviivat :: Point -> Float -> ((Point,Point) , (Point,Point))
-kopteriTörmäysviivat paikka kulma = 
+kopteriTörmäysviivat :: Kopteri -> ((Point,Point) , (Point,Point))
+kopteriTörmäysviivat kopteri = 
     let
+     paikka = kop_paikka kopteri
+     kulma  = kop_kulma kopteri 
      vasen = -170
      oikea = 100 
      kääntö = rotateV (- degToRad kulma)

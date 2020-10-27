@@ -50,21 +50,11 @@ reagoi tapahtuma peli
 kopterille :: (Kopteri -> Kopteri) -> Choplifter -> Choplifter
 kopterille f peli = peli{cl_kopteri = f (cl_kopteri peli)} 
 
-cl_paikka :: Choplifter -> Point
-cl_paikka = kop_paikka . cl_kopteri
-
-cl_nopeus :: Choplifter -> Vector
-cl_nopeus = kop_nopeus . cl_kopteri
-
-cl_kulma, cl_teho :: Choplifter -> Float
-cl_kulma = kop_kulma . cl_kopteri
-cl_teho  = kop_teho . cl_kopteri
-    
 päivitäPelitilanne :: Float -> PeliTilanne -> PeliTilanne
 päivitäPelitilanne aikaEdellisestä pelitilanne 
     = case pelitilanne of
         GameOver cl -> GameOver cl
-        GameOn cl   -> case  törmääköTaloon (cl_paikka cl) (cl_kulma cl) (cl_talot cl) of
+        GameOn cl   -> case  törmääköTaloon (kopteriTörmäysviivat (cl_kopteri cl)) (cl_talot cl)  of
                         Nothing -> GameOn (päivitäPeliä aikaEdellisestä cl)
                         Just Roottori -> GameOver cl
                         Just Laskuteline 
@@ -90,15 +80,15 @@ päivitäPeliä aikaEdellisestä edellinenTila
 data TörmäysKohta = Laskuteline | Roottori 
         deriving (Eq,Ord,Show)
 
-törmääköTaloon :: Point -> Float -> [Talo] -> Maybe TörmäysKohta
-törmääköTaloon paikka kulma talot = fmap maximum1 (nonEmpty (mapMaybe törmääköYhteen talot))
+törmääköTaloon :: ((Point,Point),(Point,Point)) -> [Talo] -> Maybe TörmäysKohta
+törmääköTaloon törmäysviivat talot = fmap maximum1 (nonEmpty (mapMaybe törmääköYhteen talot))
                                    -- case (nonEmpty (mapMaybe törmääköYhteen talot)) of
                                    --  Nothing -> Nothing
                                    --  Just kohdat -> Just (maximum1 kohdat)
     where
      törmääköYhteen talo 
         = let 
-            ((ala1,ala2),(ylä1,ylä2)) = kopteriTörmäysviivat paikka kulma
+            ((ala1,ala2),(ylä1,ylä2)) = törmäysviivat
             (va,oy)   = nurkkaPisteet talo 
           in case (not (segClearsBox ala1 ala2 va oy), not (segClearsBox ylä1 ylä2 va oy)) of
                 (True,False) -> Just Laskuteline
@@ -113,26 +103,16 @@ piirräPeliTilanne pelitilanne
 
 piirräPeli :: Choplifter -> Picture
 piirräPeli peli = let
-                   kulma = cl_kulma peli 
-                   aika  = cl_aika peli
-                   (kopteriX,kopteriY) = cl_paikka peli
-                   teho = cl_teho peli
                    talot = cl_talot peli
 
-                   ((va,oa), (va1,oa1)) = kopteriTörmäysviivat (kopteriX, kopteriY) kulma
-                   apuviivaAla = color red (line [va,oa])
-                   apuviivaYlä= color red (line [va1,oa1])
+                   kopterikuva = piirräKopteri (cl_aika peli) (cl_kopteri peli)
 
-                   kopterikuva = rotate kulma (scale 0.4 0.4 (piirräKopteri teho aika))
-
-                   hemmoKuvat = map (piirräHemmo aika)  (cl_hemmot peli)
+                   hemmoKuvat = map (piirräHemmo (cl_aika peli))  (cl_hemmot peli)
                    taloKuvat  = map piirräTalo talot
-                   peliKuva = translate kopteriX kopteriY kopterikuva 
-                                        <> maa  
-                                        <> pictures taloKuvat
-                                        <> pictures hemmoKuvat
-                                        <> apuviivaAla
-                                        <> apuviivaYlä
+                   peliKuva = maa  
+                              <> pictures taloKuvat
+                              <> pictures hemmoKuvat
+                              <> kopterikuva
                                         
                   in scale 0.25 0.25 (translate 0 (-180) peliKuva)
 
