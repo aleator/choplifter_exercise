@@ -1,7 +1,6 @@
 module Main where
 import Graphics.Gloss
 import Graphics.Gloss.Interface.Pure.Game
-import Graphics.Gloss.Geometry.Angle
 import Graphics.Gloss.Data.Vector
 import Graphics.Gloss.Geometry.Line
 import Prelude hiding (Down)
@@ -10,6 +9,7 @@ import Data.List (partition)
 import Aritmetiikka
 import Hemmot
 import Kopteri
+import Talot
 
 alkutilanne :: PeliTilanne 
 alkutilanne =
@@ -189,45 +189,15 @@ data Choplifter
    
     ,cl_talot  :: [Talo]         -- Esteet pelissä
     ,cl_hemmot :: [Hemmo]        -- Pelihahmot
-    
    }
 
 
 
 korkeusKohdassa :: Float -> Choplifter -> Float
 korkeusKohdassa kohta peli =
-  maybe 0 maximum1 . nonEmpty . map osuukoTaloon . cl_talot $ peli
- where
-  osuukoTaloon :: Talo -> Float
-  osuukoTaloon talo
-    | abs (talo_sijainti talo - kohta) < (talo_leveys talo / 2) = talo_korkeus
-      talo
-    | otherwise = 0
+  maybe 0 maximum1 . nonEmpty . map (osuukoTaloon kohta) . cl_talot $ peli
 
 
-
---- Talot
-data Talo = Talo {talo_korkeus :: Float, talo_leveys :: Float
-                 ,talo_sijainti :: Float }
-
-piirräTalo :: Talo -> Picture
-piirräTalo talo = let
-                   paikoillaan = translate (talo_sijainti talo) (talo_korkeus talo / 2) talonKuva
-                   talonKuva = color (greyN 0.5) 
-                                (rectangleSolid (talo_leveys talo) (talo_korkeus talo))
-
-                   ((vax,vay),(oyx,oyy)) = nurkkaPisteet talo 
-                   apupisteet =  translate vax vay (color red (circleSolid 10))
-                                <> translate oyx oyy (color red (circleSolid 10))
-                  in paikoillaan <> apupisteet
-
--- type Point = (Float,Float)
-nurkkaPisteet :: Talo -> (Point,Point)
-nurkkaPisteet talo = 
-    let
-        vasenAla = (talo_sijainti talo - (talo_leveys talo / 2) , 0)
-        oikeaYlä = (talo_sijainti talo + (talo_leveys talo / 2)      , talo_korkeus talo) 
-    in (vasenAla,oikeaYlä)
 
 maa :: Picture
 maa = color green (translate 0 (-500) (rectangleSolid 5000 1000))
